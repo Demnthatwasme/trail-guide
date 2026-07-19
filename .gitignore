@@ -1,0 +1,15 @@
+# Python virtual environment
+.venv/
+__pycache__/
+*.pyc
+
+# Local secrets and configurations
+.env
+.env.*
+
+# Large vector database storage
+chroma_db/
+
+# System specific files
+.DS_Store
+Thumps.db
