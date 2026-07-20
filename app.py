@@ -12,47 +12,45 @@ from langchain_classic.retrievers import ContextualCompressionRetriever
 from langchain_classic.retrievers.document_compressors import CrossEncoderReranker
 from langchain_community.cross_encoders import HuggingFaceCrossEncoder
 
-# --- 1. Setup & Load Secrets ---
-# This looks for the hidden .env file and loads its variables into your system environment
+
+## IMP ## put your key in .env and add it to git ingore . reading the api key from the file will be done by this
 load_dotenv()
 
-# Check to ensure the key was loaded properly before running the app
+# api key check
 if not os.getenv("GOOGLE_API_KEY"):
     st.error("Error: GOOGLE_API_KEY not found. Please make sure your .env file is set up correctly.")
     st.stop()
 
-# --- 2. Page Configuration ---
+# page UI , keeping it simple
 st.set_page_config(page_title="Trail & Gear Advisor", page_icon="🚵", layout="centered")
 st.title("🚵 Mountain Bike Trail & Gear Advisor")
 st.markdown("Ask me anything about bike maintenance, torque specs, or trail guides!")
 
-# --- 3. Cache the AI Setup ---
-# @st.cache_resource ensures the DB and Model only load once, making the web app fast
+
+# IMP 2 , make sure to cache the model so that the loading only happens once per run
 @st.cache_resource
 def load_rag_pipeline():
-    
-    # A. Load Database
+    # load database
+    # Used re ranker
+    # took top 3 results 
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
     
-    # B. Better AI Retrieval using a Re-ranker
     base_retriever = db.as_retriever(search_kwargs={"k": 10})
     reranker_model = HuggingFaceCrossEncoder(model_name="cross-encoder/ms-marco-MiniLM-L-6-v2")
     compressor = CrossEncoderReranker(model=reranker_model, top_n=3)
-
-    # C. Combine them: Chroma fetches 10, the compressor shrinks it to 3
     retriever = ContextualCompressionRetriever(
         base_compressor=compressor, 
         base_retriever=base_retriever
     )    
 
-    # D. Load LLM
+    #Load LLM
     llm = ChatGoogleGenerativeAI(
         model="gemini-3.5-flash",
         google_api_key=os.getenv("GOOGLE_API_KEY")
     )
     
-    # E. Define the Contextualizer Prompt (Memory Step 1)
+    # Defining the context history prompt
     contextualize_q_system_prompt = """Given a chat history and the latest user question \
     which might reference context in the chat history, formulate a standalone question \
     which can be understood without the chat history. Do NOT answer the question, \
@@ -71,7 +69,7 @@ def load_rag_pipeline():
         llm, retriever, contextualize_q_prompt
     )
 
-    # G. The Final Answer Prompt (Memory Step 2)
+    # Prompt for answer generation
     qa_system_prompt = """
     You are an expert mountain bike mechanic and trail guide. 
     Use the provided retrieved context to answer the user's question. 
@@ -87,13 +85,13 @@ def load_rag_pipeline():
         ("human", "{input}"),
     ])
     
-    # H. Build the Final RAG Chain
+    # Build the Final RAG Chain
     document_chain = create_stuff_documents_chain(llm, qa_prompt)
     return create_retrieval_chain(history_aware_retriever, document_chain)
 
 rag_chain = load_rag_pipeline()
 
-# --- 4. Chat Interface State ---
+# --- Chat Interface State ---
 # Initialize chat history in Streamlit's session state
 if "messages" not in st.session_state:
     st.session_state.messages = []

@@ -1,0 +1,34 @@
+hey this is just something casual as to whats happen
+
+well what do you understand by RAG ? simply put it is simply using/reading some documents for information purpose before
+giving out the output to the reader . these documents can be used to precompute vector embeddings or even searched on the fly.
+
+
+The main question is how to do this .
+the steps are actually simple 
+since you need documents/manuals to even start looking , first procure some documents.
+in this demo i put forward some amazing docs in bike_data folder. (They have strictly been used for educational/demostration purpose and i have no claim over the ownership)
+
+Now that you have gotten your pdfs , what to do next ?
+well you cannot feed the pdf directly , cause there are images, there are text that are not written in normal text form(writing in a slanting line etc.)
+so as the first step to proceed we need to make the text available in a retrival format(we need pdfs as chunks of text and for text reading i have used PyPdfloader takes care of taking out the text).
+
+ok so now you have the data in chunks but how to feed them into the model ?
+well the model wont understand the chunks directly , you would have to give it in the form of vectors(embeddings)
+
+for this i have used a simple model from huggingface (all-mini-LM-L6-v2)
+and as for storing and fast retrival of vectors , i have used chromadb 
+
+so the data has now been processed , whats next ?
+
+first and foremost is to take out the api key for your ai model from your hidden folder.
+after that i made some sort of minimilistic webpage using streamlit(it allowed me to code in python , cause well i dont know javascript(for now))
+
+after that make sure the cache the ai model so loading happens only once
+
+afterwards it farely simple though i have one regret, i would have been better to do this as OOPS rather than just writing many intialisation.
+
+
+
+
+
